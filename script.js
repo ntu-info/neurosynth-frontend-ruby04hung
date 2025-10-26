@@ -245,11 +245,47 @@ async function runAllTests() {
     }
 }
 
+// 避免太頻繁發送請求
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// 設定自動搜尋（輸入時等待300毫秒後自動搜尋）
+const debouncedSearchTerm = debounce((term) => {
+    if (term.trim()) {
+        searchTerm(term);
+    }
+}, 300);
+
+const debouncedSearchQuery = debounce((query) => {
+    if (query.trim()) {
+        searchQuery(query);
+    }
+}, 300);
+
 // 事件監聽器
 document.addEventListener('DOMContentLoaded', function() {
     const termInput = document.getElementById('termInput');
     const queryInput = document.getElementById('queryInput');
     
+    // AJAX 即時搜尋 - 輸入時自動發送
+    termInput.addEventListener('input', function(e) {
+        debouncedSearchTerm(e.target.value);
+    });
+    
+    queryInput.addEventListener('input', function(e) {
+        debouncedSearchQuery(e.target.value);
+    });
+    
+    // 保留原有的 Enter 鍵支援
     termInput.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
             searchTerm();
